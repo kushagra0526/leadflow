@@ -41,6 +41,13 @@ export default function Home() {
     };
   }, [status, search, reloadKey]);
 
+  // A tab left open (e.g. overnight) re-sorts today's/overdue follow-ups when the user comes back to it.
+  useEffect(() => {
+    const onFocus = () => setReloadKey((k) => k + 1);
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
   const reload = () => setReloadKey((k) => k + 1);
   const clearFilters = () => {
     setStatus(null);
