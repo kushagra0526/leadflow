@@ -20,7 +20,7 @@ services:
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-leadflow}:${POSTGRES_PASSWORD:-leadflow}@db:5432/${POSTGRES_DB:-leadflow}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000" # this PC only: the API has no login, so don't publish it to the network
     depends_on:
       db:
         condition: service_healthy
@@ -31,7 +31,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       - backend
 
