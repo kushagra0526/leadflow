@@ -1,14 +1,25 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from pydantic import AwareDatetime, BaseModel, ConfigDict, StringConstraints, field_validator
+from pydantic import AfterValidator, AwareDatetime, BaseModel, ConfigDict, StringConstraints, field_validator
 
 from app.models import LeadStatus
 
 
+def storable(text: str) -> str:
+    # Postgres rejects NUL and every database rejects broken Unicode; let them through and the save crashes (500)
+    if "\x00" in text:
+        raise ValueError("text cannot contain NUL characters")
+    try:
+        text.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError("text contains invalid characters") from None
+    return text
+
+
 class LeadCreate(BaseModel):
-    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120)]
-    company: Annotated[str, StringConstraints(max_length=120)] | None = None
+    name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120), AfterValidator(storable)]
+    company: Annotated[str, StringConstraints(max_length=120), AfterValidator(storable)] | None = None
     phone: Annotated[str, StringConstraints(pattern=r"^\+?[0-9 ()-]{7,20}$")] | None = None
 
     @field_validator("company", "phone", mode="before")
@@ -31,7 +42,7 @@ class LeadUpdate(BaseModel):
 
 
 class NoteCreate(BaseModel):
-    body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+    body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000), AfterValidator(storable)]
     # must carry a timezone offset, otherwise "today" would depend on the server's clock
     follow_up_at: AwareDatetime | None = None
 

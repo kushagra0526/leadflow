@@ -35,7 +35,7 @@ def lead_detail(lead: Lead) -> LeadDetail:
 @router.get("")
 def list_leads(
     status: LeadStatus | None = None,
-    q: Annotated[str | None, Query(max_length=100, description="Case-insensitive name search")] = None,
+    q: Annotated[str | None, Query(max_length=100, pattern=r"^[^\x00]*$", description="Case-insensitive name search")] = None,
     db: Session = Depends(get_db),
 ) -> list[LeadOut]:
     n = aliased(Note)

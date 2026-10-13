@@ -69,6 +69,24 @@ def test_out_of_range_lead_id_is_rejected_not_a_crash(client):
         assert client.post(f"/api/leads/{bad_id}/notes", json={"body": "hi"}).status_code == 422
 
 
+def test_unstorable_text_is_rejected_not_a_crash(client):
+    lead = client.post("/api/leads", json={"name": "Sarah"}).json()
+    broken = '"' + chr(92) + 'ud800"'  # JSON text for a lone surrogate (half of a Unicode character)
+
+    def post_raw(url, json_text):
+        return client.post(url, content=json_text.encode(), headers={"Content-Type": "application/json"})
+
+    assert client.post("/api/leads", json={"name": "a\x00b"}).status_code == 422
+    assert client.post("/api/leads", json={"name": "A", "company": "x\x00"}).status_code == 422
+    assert client.post(f"/api/leads/{lead['id']}/notes", json={"body": "x\x00y"}).status_code == 422
+    assert client.get("/api/leads", params={"q": "a\x00b"}).status_code == 422
+    assert post_raw("/api/leads", '{"name": ' + broken + "}").status_code == 422
+    assert post_raw(f"/api/leads/{lead['id']}/notes", '{"body": ' + broken + "}").status_code == 422
+    # an input rejected for another reason (too long) used to crash while echoing the broken text back
+    res = post_raw("/api/leads", '{"name": "' + (chr(92) + "ud800") * 121 + '"}')
+    assert res.status_code == 422 and res.json()["detail"][0]["loc"] == ["body", "name"]
+
+
 def test_status_change_is_saved(client):
     lead = client.post("/api/leads", json={"name": "Sarah"}).json()
 
