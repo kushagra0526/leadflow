@@ -22,7 +22,11 @@ export function LeadModal({ leadId, onClose, onChanged }: Props) {
   useEffect(() => {
     let ignore = false;
     getLead(leadId).then(
-      (data) => !ignore && setLead(data),
+      (data) => {
+        if (ignore) return;
+        setLead(data);
+        setError(null);
+      },
       (e: Error) => !ignore && setError(e.message),
     );
     return () => {
