@@ -1,12 +1,19 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
 from app.db import get_db
 from app.models import Lead, Note
-from app.schemas import LeadCreate, LeadOut, NoteOut
+from app.schemas import LeadCreate, LeadDetail, LeadOut, LeadUpdate, NoteOut
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
+
+
+def get_lead_or_404(lead_id: int, db: Session = Depends(get_db)) -> Lead:
+    lead = db.get(Lead, lead_id)
+    if lead is None:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    return lead
 
 
 def lead_out(lead: Lead, last_note: Note | None = None) -> LeadOut:
@@ -14,6 +21,12 @@ def lead_out(lead: Lead, last_note: Note | None = None) -> LeadOut:
     if last_note:
         out.last_note = NoteOut.model_validate(last_note)
     return out
+
+
+def lead_detail(lead: Lead) -> LeadDetail:
+    detail = LeadDetail.model_validate(lead)
+    detail.last_note = detail.notes[0] if detail.notes else None
+    return detail
 
 
 @router.get("")
@@ -42,3 +55,18 @@ def create_lead(payload: LeadCreate, db: Session = Depends(get_db)) -> LeadOut:
     db.add(lead)
     db.commit()
     return lead_out(lead)
+
+
+@router.get("/{lead_id}")
+def get_lead(lead: Lead = Depends(get_lead_or_404)) -> LeadDetail:
+    return lead_detail(lead)
+
+
+@router.patch("/{lead_id}")
+def update_lead(
+    payload: LeadUpdate, lead: Lead = Depends(get_lead_or_404), db: Session = Depends(get_db)
+) -> LeadDetail:
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(lead, field, value)
+    db.commit()
+    return lead_detail(lead)

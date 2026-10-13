@@ -17,6 +17,19 @@ class LeadCreate(BaseModel):
         return (v.strip() or None) if isinstance(v, str) else v
 
 
+class LeadUpdate(BaseModel):
+    status: LeadStatus | None = None
+    # follow-ups are set by adding a note; PATCH can only clear one ("Mark done")
+    next_follow_up_at: None = None
+
+    @field_validator("status")
+    @classmethod
+    def status_not_null(cls, v):
+        if v is None:
+            raise ValueError("status cannot be null")
+        return v
+
+
 class NoteOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,3 +50,7 @@ class LeadOut(BaseModel):
     next_follow_up_at: datetime | None
     created_at: datetime
     last_note: NoteOut | None = None
+
+
+class LeadDetail(LeadOut):
+    notes: list[NoteOut]
