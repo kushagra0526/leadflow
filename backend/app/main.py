@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app import models  # noqa: F401  registers the tables before create_all
 from app.db import Base, engine
 
 
