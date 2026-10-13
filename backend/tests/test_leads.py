@@ -86,3 +86,39 @@ def test_mark_done_clears_follow_up(client, session_factory):
     assert res.status_code == 200
     assert res.json()["next_follow_up_at"] is None
     assert res.json()["status"] == "new"
+
+
+def test_note_with_follow_up_updates_lead(client):
+    lead = client.post("/api/leads", json={"name": "Sarah"}).json()
+
+    res = client.post(f"/api/leads/{lead['id']}/notes", json={
+        "body": "Sent pricing PDF", "follow_up_at": "2026-10-15T14:00:00+05:30",
+    })
+    assert res.status_code == 201
+    assert res.json()["body"] == "Sent pricing PDF"
+
+    detail = client.get(f"/api/leads/{lead['id']}").json()
+    due = datetime(2026, 10, 15, 8, 30, tzinfo=timezone.utc)
+    assert datetime.fromisoformat(detail["next_follow_up_at"]) == due
+    assert datetime.fromisoformat(detail["notes"][0]["follow_up_at"]) == due
+    assert client.get("/api/leads").json()[0]["last_note"]["body"] == "Sent pricing PDF"
+
+
+def test_note_without_follow_up_keeps_existing_one(client):
+    lead = client.post("/api/leads", json={"name": "Sarah"}).json()
+    client.post(f"/api/leads/{lead['id']}/notes", json={"body": "Call Friday", "follow_up_at": "2026-10-16T10:00:00Z"})
+    client.post(f"/api/leads/{lead['id']}/notes", json={"body": "Emailed brochure"})
+
+    detail = client.get(f"/api/leads/{lead['id']}").json()
+    assert detail["next_follow_up_at"] is not None
+    assert [n["body"] for n in detail["notes"]] == ["Emailed brochure", "Call Friday"]
+
+
+def test_add_note_rejects_bad_input(client):
+    lead = client.post("/api/leads", json={"name": "Sarah"}).json()
+    url = f"/api/leads/{lead['id']}/notes"
+    assert client.post(url, json={"body": "   "}).status_code == 422
+    assert client.post(url, json={"body": "x" * 2001}).status_code == 422
+    assert client.post(url, json={"body": "ok", "follow_up_at": "2026-10-16T10:00:00"}).status_code == 422
+    assert client.post(url, json={"body": "ok", "follow_up_at": "tomorrow"}).status_code == 422
+    assert client.post("/api/leads/999/notes", json={"body": "ok"}).status_code == 404

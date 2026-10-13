@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, aliased
 
 from app.db import get_db
 from app.models import Lead, Note
-from app.schemas import LeadCreate, LeadDetail, LeadOut, LeadUpdate, NoteOut
+from app.schemas import LeadCreate, LeadDetail, LeadOut, LeadUpdate, NoteCreate, NoteOut
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 
@@ -70,3 +70,13 @@ def update_lead(
         setattr(lead, field, value)
     db.commit()
     return lead_detail(lead)
+
+
+@router.post("/{lead_id}/notes", status_code=201)
+def add_note(payload: NoteCreate, lead: Lead = Depends(get_lead_or_404), db: Session = Depends(get_db)) -> NoteOut:
+    note = Note(lead_id=lead.id, **payload.model_dump())
+    db.add(note)
+    if note.follow_up_at:
+        lead.next_follow_up_at = note.follow_up_at
+    db.commit()
+    return NoteOut.model_validate(note)

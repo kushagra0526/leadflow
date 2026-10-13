@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, StringConstraints, field_validator
 
 from app.models import LeadStatus
 
@@ -28,6 +28,12 @@ class LeadUpdate(BaseModel):
         if v is None:
             raise ValueError("status cannot be null")
         return v
+
+
+class NoteCreate(BaseModel):
+    body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+    # must carry a timezone offset, otherwise "today" would depend on the server's clock
+    follow_up_at: AwareDatetime | None = None
 
 
 class NoteOut(BaseModel):
