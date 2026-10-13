@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app import models  # noqa: F401  registers the tables before create_all
 from app.db import Base, engine
+from app.routers import leads
 
 
 @asynccontextmanager
@@ -22,6 +23,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.include_router(leads.router)
 
 
 @app.get("/api/health")
