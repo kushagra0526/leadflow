@@ -6,9 +6,9 @@ import { FollowUpChip } from "@/components/FollowUpChip";
 import { CloseButton, Modal } from "@/components/Modal";
 import { NoteForm } from "@/components/NoteForm";
 import { NoteTimeline } from "@/components/NoteTimeline";
-import { StatusBadge } from "@/components/StatusBadge";
-import { addNote, getLead } from "@/lib/api";
-import type { LeadDetail } from "@/lib/types";
+import { addNote, getLead, updateLead } from "@/lib/api";
+import { STATUS, STATUSES } from "@/lib/status";
+import type { LeadDetail, LeadStatus } from "@/lib/types";
 
 // onChanged lets the list behind the popup refresh after every save
 type Props = { leadId: number; onClose: () => void; onChanged: () => void };
@@ -17,6 +17,7 @@ export function LeadModal({ leadId, onClose, onChanged }: Props) {
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -33,6 +34,17 @@ export function LeadModal({ leadId, onClose, onChanged }: Props) {
     await addNote(leadId, data);
     setReloadKey((k) => k + 1);
     onChanged();
+  }
+
+  // On failure `lead` is unchanged, so the status dropdown snaps back to the saved value.
+  async function handleUpdate(data: { status?: LeadStatus; next_follow_up_at?: null }) {
+    setSaveError(null);
+    try {
+      setLead(await updateLead(leadId, data));
+      onChanged();
+    } catch (e) {
+      setSaveError((e as Error).message);
+    }
   }
 
   return (
@@ -54,14 +66,40 @@ export function LeadModal({ leadId, onClose, onChanged }: Props) {
             )}
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            {lead && <StatusBadge status={lead.status} />}
+            {lead && (
+              <select
+                aria-label="Lead status"
+                value={lead.status}
+                onChange={(e) => handleUpdate({ status: e.target.value as LeadStatus })}
+                className={`cursor-pointer rounded-full border-0 py-1 pl-3 pr-8 text-xs font-semibold uppercase tracking-wide ring-1 ring-inset focus:outline-none focus:ring-2 focus:ring-blue-500 ${STATUS[lead.status].badge}`}
+              >
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS[s].label}
+                  </option>
+                ))}
+              </select>
+            )}
             <CloseButton onClick={onClose} />
           </div>
         </header>
 
+        {saveError && (
+          <p role="alert" className="border-b border-red-200 bg-red-50 px-6 py-2 text-sm text-red-700">
+            Couldn&apos;t save: {saveError}
+          </p>
+        )}
+
         {lead?.next_follow_up_at && (
-          <div className="border-b border-slate-200 px-6 py-2.5">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-6 py-2.5">
             <FollowUpChip iso={lead.next_follow_up_at} />
+            <button
+              type="button"
+              onClick={() => handleUpdate({ next_follow_up_at: null })}
+              className="rounded-md px-2 py-1 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-blue-600"
+            >
+              ✓ Mark done
+            </button>
           </div>
         )}
 
