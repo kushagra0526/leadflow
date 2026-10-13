@@ -102,7 +102,7 @@ export default function Home() {
         )}
       </main>
 
-      {selectedId !== null && <LeadModal leadId={selectedId} onClose={() => setSelectedId(null)} />}
+      {selectedId !== null && <LeadModal leadId={selectedId} onClose={() => setSelectedId(null)} onChanged={reload} />}
     </>
   );
 }

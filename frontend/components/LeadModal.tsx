@@ -4,16 +4,19 @@ import { useEffect, useState } from "react";
 
 import { FollowUpChip } from "@/components/FollowUpChip";
 import { CloseButton, Modal } from "@/components/Modal";
+import { NoteForm } from "@/components/NoteForm";
 import { NoteTimeline } from "@/components/NoteTimeline";
 import { StatusBadge } from "@/components/StatusBadge";
-import { getLead } from "@/lib/api";
+import { addNote, getLead } from "@/lib/api";
 import type { LeadDetail } from "@/lib/types";
 
-type Props = { leadId: number; onClose: () => void };
+// onChanged lets the list behind the popup refresh after every save
+type Props = { leadId: number; onClose: () => void; onChanged: () => void };
 
-export function LeadModal({ leadId, onClose }: Props) {
+export function LeadModal({ leadId, onClose, onChanged }: Props) {
   const [lead, setLead] = useState<LeadDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let ignore = false;
@@ -24,7 +27,13 @@ export function LeadModal({ leadId, onClose }: Props) {
     return () => {
       ignore = true;
     };
-  }, [leadId]);
+  }, [leadId, reloadKey]);
+
+  async function handleAddNote(data: { body: string; follow_up_at?: string }) {
+    await addNote(leadId, data);
+    setReloadKey((k) => k + 1);
+    onChanged();
+  }
 
   return (
     <Modal labelledBy="lead-modal-title" onClose={onClose} width="max-w-2xl">
@@ -67,6 +76,8 @@ export function LeadModal({ leadId, onClose }: Props) {
             <p className="text-sm text-slate-500">Loading…</p>
           )}
         </div>
+
+        {lead && <NoteForm onSubmit={handleAddNote} />}
       </div>
     </Modal>
   );
