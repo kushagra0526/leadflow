@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { LeadList } from "@/components/LeadList";
+import { LeadModal } from "@/components/LeadModal";
 import { StatusFilter } from "@/components/StatusFilter";
 import { listLeads } from "@/lib/api";
 import type { Lead, LeadStatus } from "@/lib/types";
@@ -11,7 +12,7 @@ export default function Home() {
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
-  const [, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [status, setStatus] = useState<LeadStatus | null>(null);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState(""); // `query` once the user stops typing
@@ -100,6 +101,8 @@ export default function Home() {
           <LeadList leads={leads} onOpen={setSelectedId} />
         )}
       </main>
+
+      {selectedId !== null && <LeadModal leadId={selectedId} onClose={() => setSelectedId(null)} />}
     </>
   );
 }
