@@ -18,6 +18,9 @@ def test_create_lead_rejects_bad_input(client):
     assert client.post("/api/leads", json={}).status_code == 422
     assert client.post("/api/leads", json={"name": "   "}).status_code == 422
     assert client.post("/api/leads", json={"name": "A", "phone": "call me"}).status_code == 422
+    assert client.post("/api/leads", json={"name": "A", "phone": "-------"}).status_code == 422  # no digits
+    assert client.post("/api/leads", json={"name": "A", "phone": "123456"}).status_code == 422  # too few digits
+    assert client.post("/api/leads", json={"name": "A", "phone": "+91 (987) 654-3210"}).status_code == 201
     assert client.post("/api/leads", json={"name": "A" * 121}).status_code == 422
 
 

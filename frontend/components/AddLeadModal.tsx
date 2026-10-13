@@ -72,8 +72,9 @@ export function AddLeadModal({ onClose, onCreated }: Props) {
             Phone <span className="font-normal text-slate-500">(Optional)</span>
             <input
               type="tel"
-              pattern="\+?[0-9 \(\)\-]{7,20}"
-              title="7–20 digits; spaces, +, - and ( ) are allowed"
+              pattern="\+?(?:[ \(\)\-]*[0-9]){7,15}[ \(\)\-]*"
+              maxLength={30}
+              title="7–15 digits; spaces, +, - and ( ) are allowed"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="e.g., +91 98765 43210"

@@ -20,7 +20,8 @@ def storable(text: str) -> str:
 class LeadCreate(BaseModel):
     name: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=120), AfterValidator(storable)]
     company: Annotated[str, StringConstraints(max_length=120), AfterValidator(storable)] | None = None
-    phone: Annotated[str, StringConstraints(pattern=r"^\+?[0-9 ()-]{7,20}$")] | None = None
+    # 7-15 digits, optionally separated by spaces, dashes or brackets
+    phone: Annotated[str, StringConstraints(max_length=30, pattern=r"^\+?(?:[ ()-]*[0-9]){7,15}[ ()-]*$")] | None = None
 
     @field_validator("company", "phone", mode="before")
     @classmethod
