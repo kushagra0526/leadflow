@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, StringConstraints, field_validator
@@ -34,6 +34,14 @@ class NoteCreate(BaseModel):
     body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
     # must carry a timezone offset, otherwise "today" would depend on the server's clock
     follow_up_at: AwareDatetime | None = None
+
+    @field_validator("follow_up_at")
+    @classmethod
+    def to_utc(cls, v):
+        try:
+            return v.astimezone(timezone.utc) if v else v
+        except OverflowError:  # e.g. 9999-12-31T23:00-05:00 is past year 9999 in UTC
+            raise ValueError("date is out of range") from None
 
 
 class NoteOut(BaseModel):

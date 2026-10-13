@@ -103,6 +103,7 @@ def test_note_with_follow_up_updates_lead(client):
     })
     assert res.status_code == 201
     assert res.json()["body"] == "Sent pricing PDF"
+    assert res.json()["follow_up_at"] == "2026-10-15T08:30:00Z"  # echoed back in UTC
 
     detail = client.get(f"/api/leads/{lead['id']}").json()
     due = datetime(2026, 10, 15, 8, 30, tzinfo=timezone.utc)
@@ -128,6 +129,9 @@ def test_add_note_rejects_bad_input(client):
     assert client.post(url, json={"body": "x" * 2001}).status_code == 422
     assert client.post(url, json={"body": "ok", "follow_up_at": "2026-10-16T10:00:00"}).status_code == 422
     assert client.post(url, json={"body": "ok", "follow_up_at": "tomorrow"}).status_code == 422
+    # valid dates whose UTC conversion overflows used to crash with a 500
+    assert client.post(url, json={"body": "ok", "follow_up_at": "9999-12-31T23:00:00-05:00"}).status_code == 422
+    assert client.post(url, json={"body": "ok", "follow_up_at": "0001-01-01T00:00:00+05:30"}).status_code == 422
     assert client.post("/api/leads/999/notes", json={"body": "ok"}).status_code == 404
 
 
