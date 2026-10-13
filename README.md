@@ -88,7 +88,7 @@ All settings are listed in [`.env.example`](.env.example), and every one has a d
 ## Tests
 
 ```bash
-cd backend && python -m pytest      # 12 API tests (in-memory SQLite)
+cd backend && python -m pytest      # 13 API tests (in-memory SQLite)
 cd frontend && npm test             # follow-up date logic (Vitest)
 ```
 

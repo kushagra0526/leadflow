@@ -62,6 +62,13 @@ def test_missing_lead_returns_404(client):
     assert client.get("/api/leads/not-a-number").status_code == 422
 
 
+def test_out_of_range_lead_id_is_rejected_not_a_crash(client):
+    for bad_id in ["0", "2147483648", "99999999999999999999"]:
+        assert client.get(f"/api/leads/{bad_id}").status_code == 422
+        assert client.patch(f"/api/leads/{bad_id}", json={"status": "won"}).status_code == 422
+        assert client.post(f"/api/leads/{bad_id}/notes", json={"body": "hi"}).status_code == 422
+
+
 def test_status_change_is_saved(client):
     lead = client.post("/api/leads", json={"name": "Sarah"}).json()
 

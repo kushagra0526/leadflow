@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
@@ -11,7 +11,8 @@ from app.schemas import LeadCreate, LeadDetail, LeadOut, LeadUpdate, NoteCreate,
 router = APIRouter(prefix="/api/leads", tags=["leads"])
 
 
-def get_lead_or_404(lead_id: int, db: Session = Depends(get_db)) -> Lead:
+# le: ids are 32-bit INTEGER columns; a bigger number would crash the lookup (500) instead of a 422
+def get_lead_or_404(lead_id: Annotated[int, Path(ge=1, le=2_147_483_647)], db: Session = Depends(get_db)) -> Lead:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status_code=404, detail="Lead not found")
