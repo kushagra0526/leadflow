@@ -122,3 +122,20 @@ def test_add_note_rejects_bad_input(client):
     assert client.post(url, json={"body": "ok", "follow_up_at": "2026-10-16T10:00:00"}).status_code == 422
     assert client.post(url, json={"body": "ok", "follow_up_at": "tomorrow"}).status_code == 422
     assert client.post("/api/leads/999/notes", json={"body": "ok"}).status_code == 404
+
+
+def test_list_filters_by_status_and_searches_name(client):
+    sarah = client.post("/api/leads", json={"name": "Sarah Connor"}).json()
+    client.post("/api/leads", json={"name": "Hank Scorpio"})
+    client.post("/api/leads", json={"name": "100% Real Lead"})
+    client.patch(f"/api/leads/{sarah['id']}", json={"status": "won"})
+
+    def names(**params):
+        return [lead["name"] for lead in client.get("/api/leads", params=params).json()]
+
+    assert names(status="won") == ["Sarah Connor"]
+    assert names(status="new") == ["100% Real Lead", "Hank Scorpio"]
+    assert names(q="  conn ") == ["Sarah Connor"]
+    assert names(q="%") == ["100% Real Lead"]
+    assert names(status="new", q="sarah") == []
+    assert client.get("/api/leads", params={"status": "pending"}).status_code == 422

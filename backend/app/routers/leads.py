@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
 from app.db import get_db
-from app.models import Lead, Note
+from app.models import Lead, LeadStatus, Note
 from app.schemas import LeadCreate, LeadDetail, LeadOut, LeadUpdate, NoteCreate, NoteOut
 
 router = APIRouter(prefix="/api/leads", tags=["leads"])
@@ -30,7 +32,11 @@ def lead_detail(lead: Lead) -> LeadDetail:
 
 
 @router.get("")
-def list_leads(db: Session = Depends(get_db)) -> list[LeadOut]:
+def list_leads(
+    status: LeadStatus | None = None,
+    q: Annotated[str | None, Query(max_length=100, description="Case-insensitive name search")] = None,
+    db: Session = Depends(get_db),
+) -> list[LeadOut]:
     n = aliased(Note)
     latest_note_id = (
         select(n.id)
@@ -41,12 +47,16 @@ def list_leads(db: Session = Depends(get_db)) -> list[LeadOut]:
         .scalar_subquery()
     )
     last_activity = func.coalesce(Note.created_at, Lead.created_at)
-    rows = db.execute(
+    query = (
         select(Lead, Note)
         .outerjoin(Note, Note.id == latest_note_id)
         .order_by(last_activity.desc(), Lead.id.desc())
-    ).all()
-    return [lead_out(lead, note) for lead, note in rows]
+    )
+    if status:
+        query = query.where(Lead.status == status)
+    if q and q.strip():
+        query = query.where(Lead.name.icontains(q.strip(), autoescape=True))
+    return [lead_out(lead, note) for lead, note in db.execute(query).all()]
 
 
 @router.post("", status_code=201)
