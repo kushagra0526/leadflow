@@ -8,6 +8,7 @@ type Props = { labelledBy: string; onClose: () => void; children: ReactNode; wid
 // Mounting opens it; the parent closes it by unmounting in onClose.
 export function Modal({ labelledBy, onClose, children, width = "max-w-lg" }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
+  const pressedOnBackdrop = useRef(false);
 
   useEffect(() => {
     if (!ref.current?.open) ref.current?.showModal();
@@ -18,7 +19,10 @@ export function Modal({ labelledBy, onClose, children, width = "max-w-lg" }: Pro
       ref={ref}
       aria-labelledby={labelledBy}
       onClose={onClose}
-      onClick={(e) => e.target === ref.current && onClose()} // a click outside the content lands on the backdrop
+      // Close only when both press and release land on the backdrop: a text selection
+      // dragged out of the popup also ends as a click on the dialog, and must not discard the draft.
+      onMouseDown={(e) => (pressedOnBackdrop.current = e.target === ref.current)}
+      onClick={(e) => pressedOnBackdrop.current && e.target === ref.current && onClose()}
       className={`m-auto w-[calc(100%-2rem)] ${width} overflow-hidden rounded-xl bg-white p-0 text-slate-900 shadow-2xl backdrop:bg-slate-900/40 backdrop:backdrop-blur-sm`}
     >
       {children}
