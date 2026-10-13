@@ -3,18 +3,27 @@
 import { useEffect, useState } from "react";
 
 import { LeadList } from "@/components/LeadList";
+import { StatusFilter } from "@/components/StatusFilter";
 import { listLeads } from "@/lib/api";
-import type { Lead } from "@/lib/types";
+import type { Lead, LeadStatus } from "@/lib/types";
 
 export default function Home() {
   const [leads, setLeads] = useState<Lead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [, setSelectedId] = useState<number | null>(null);
+  const [status, setStatus] = useState<LeadStatus | null>(null);
+  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState(""); // `query` once the user stops typing
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(query), 300);
+    return () => clearTimeout(timer);
+  }, [query]);
 
   useEffect(() => {
     let ignore = false; // drop responses that arrive after a newer request started
-    listLeads({}).then(
+    listLeads({ status, q: search }).then(
       (data) => {
         if (ignore) return;
         setLeads(data);
@@ -27,9 +36,14 @@ export default function Home() {
     return () => {
       ignore = true;
     };
-  }, [reloadKey]);
+  }, [status, search, reloadKey]);
 
   const reload = () => setReloadKey((k) => k + 1);
+  const clearFilters = () => {
+    setStatus(null);
+    setQuery("");
+  };
+  const filtered = status !== null || search.trim() !== "";
 
   return (
     <>
@@ -45,6 +59,19 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-4xl px-4 py-8">
+        <div className="mb-8 flex flex-wrap items-center gap-4">
+          <StatusFilter value={status} onChange={setStatus} />
+          <input
+            type="search"
+            aria-label="Search leads by name"
+            placeholder="Search by name…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            maxLength={100}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 sm:ml-auto sm:w-60"
+          />
+        </div>
+
         {error && (
           <div role="alert" className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
             <span>Couldn&apos;t load leads: {error}</span>
@@ -57,9 +84,18 @@ export default function Home() {
         {leads === null ? (
           !error && <p className="text-slate-500">Loading leads…</p>
         ) : leads.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
-            No leads yet.
-          </p>
+          <div className="rounded-lg border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+            {filtered ? (
+              <>
+                No leads match these filters.{" "}
+                <button type="button" onClick={clearFilters} className="font-semibold text-blue-600 hover:underline">
+                  Clear filters
+                </button>
+              </>
+            ) : (
+              "No leads yet."
+            )}
+          </div>
         ) : (
           <LeadList leads={leads} onOpen={setSelectedId} />
         )}
