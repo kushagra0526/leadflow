@@ -79,7 +79,7 @@ All settings are listed in [`.env.example`](.env.example). Copy it to `.env` onl
 | --- | --- | --- | --- |
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | Docker | `leadflow` | Postgres credentials; Compose builds the backend's `DATABASE_URL` from them |
 | `DATABASE_URL` | backend | `sqlite:///./leadflow.db` | SQLAlchemy URL, e.g. `postgresql+psycopg://user:pass@host:5432/db` |
-| `CORS_ORIGINS` | backend | `http://localhost:3000` | Comma-separated origins allowed to call the API |
+| `CORS_ORIGINS` | backend | `http://localhost:3000,http://127.0.0.1:3000` | Comma-separated origins allowed to call the API |
 | `NEXT_PUBLIC_API_URL` | frontend | `http://localhost:8000` | API base URL, baked into the browser bundle at build time |
 
 ## Tests
