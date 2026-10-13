@@ -47,5 +47,6 @@ describe("timeAgo", () => {
     expect(timeAgo(new Date(now.getTime() - 2 * 86400_000).toISOString(), now)).toBe("2 days ago");
     expect(timeAgo(new Date(now.getTime() - 86400_000).toISOString(), now)).toBe("yesterday");
     expect(timeAgo(new Date(now.getTime() - 21 * 86400_000).toISOString(), now)).toBe("3 weeks ago");
+    expect(timeAgo(new Date(now.getTime() + 90_000).toISOString(), now)).toBe("just now"); // server clock ahead
   });
 });

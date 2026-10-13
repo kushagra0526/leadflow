@@ -36,7 +36,8 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 ];
 
 export function timeAgo(iso: string, now = new Date()): string {
-  const seconds = (Date.parse(iso) - now.getTime()) / 1000;
+  // capped at 0: a client clock running behind the server must not show "in 1 minute"
+  const seconds = Math.min(0, Date.parse(iso) - now.getTime()) / 1000;
   for (const [unit, size] of UNITS) {
     if (Math.abs(seconds) >= size) return relative.format(Math.trunc(seconds / size), unit);
   }
