@@ -50,22 +50,23 @@ export function LeadModal({ leadId, onClose, onChanged }: Props) {
   return (
     <Modal labelledBy="lead-modal-title" onClose={onClose} width="max-w-2xl">
       <div className="flex max-h-[85vh] flex-col">
-        <header className="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-4">
-          <div className="min-w-0">
-            <h2 id="lead-modal-title" className="truncate text-xl font-bold">
-              {lead?.name ?? "Lead"}
-              {lead?.company && <span className="font-normal text-slate-500"> ({lead.company})</span>}
-            </h2>
-            {lead?.phone && (
-              <p className="mt-1 text-sm text-slate-600">
-                <span aria-hidden>📞</span>{" "}
-                <a href={`tel:${lead.phone}`} className="hover:underline">
-                  {lead.phone}
-                </a>
-              </p>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
+        <header className="flex items-start gap-2 border-b border-slate-200 px-6 py-4">
+          {/* on narrow screens the status dropdown wraps under the name instead of squeezing it */}
+          <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <div className="min-w-0 flex-1 basis-48">
+              <h2 id="lead-modal-title" className="break-words text-xl font-bold">
+                {lead?.name ?? "Lead"}
+                {lead?.company && <span className="font-normal text-slate-500"> ({lead.company})</span>}
+              </h2>
+              {lead?.phone && (
+                <p className="mt-1 whitespace-nowrap text-sm text-slate-600">
+                  <span aria-hidden>📞</span>{" "}
+                  <a href={`tel:${lead.phone}`} className="hover:underline">
+                    {lead.phone}
+                  </a>
+                </p>
+              )}
+            </div>
             {lead && (
               <select
                 aria-label="Lead status"
@@ -80,8 +81,8 @@ export function LeadModal({ leadId, onClose, onChanged }: Props) {
                 ))}
               </select>
             )}
-            <CloseButton onClick={onClose} />
           </div>
+          <CloseButton onClick={onClose} />
         </header>
 
         {saveError && (
@@ -96,7 +97,7 @@ export function LeadModal({ leadId, onClose, onChanged }: Props) {
             <button
               type="button"
               onClick={() => handleUpdate({ next_follow_up_at: null })}
-              className="rounded-md px-2 py-1 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-blue-600"
+              className="shrink-0 whitespace-nowrap rounded-md px-2 py-1 text-sm font-semibold text-emerald-700 hover:bg-emerald-50 focus-visible:outline-2 focus-visible:outline-blue-600"
             >
               ✓ Mark done
             </button>
