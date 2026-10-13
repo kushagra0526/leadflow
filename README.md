@@ -73,7 +73,10 @@ npm run dev                     # http://localhost:3000
 
 ## Configuration
 
-All settings are listed in [`.env.example`](.env.example). Copy it to `.env` only if you want to change something.
+All settings are listed in [`.env.example`](.env.example), and every one has a default. To change one:
+
+- **With Docker:** copy `.env.example` to `.env` in the project root; Docker Compose reads it.
+- **Without Docker:** the root `.env` is not read. Set backend variables in your shell before starting `uvicorn` (e.g. `export DATABASE_URL=...`, or `$env:DATABASE_URL="..."` in PowerShell), and put `NEXT_PUBLIC_API_URL` in `frontend/.env.local`.
 
 | Variable | Used by | Default | Purpose |
 | --- | --- | --- | --- |
