@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { AddLeadModal } from "@/components/AddLeadModal";
 import { LeadList } from "@/components/LeadList";
 import { LeadModal } from "@/components/LeadModal";
 import { StatusFilter } from "@/components/StatusFilter";
@@ -13,6 +14,7 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [adding, setAdding] = useState(false);
   const [status, setStatus] = useState<LeadStatus | null>(null);
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState(""); // `query` once the user stops typing
@@ -56,6 +58,13 @@ export default function Home() {
             </svg>
             LeadFlow
           </h1>
+          <button
+            type="button"
+            onClick={() => setAdding(true)}
+            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          >
+            + Add New Lead
+          </button>
         </div>
       </header>
 
@@ -103,6 +112,7 @@ export default function Home() {
       </main>
 
       {selectedId !== null && <LeadModal leadId={selectedId} onClose={() => setSelectedId(null)} onChanged={reload} />}
+      {adding && <AddLeadModal onClose={() => setAdding(false)} onCreated={reload} />}
     </>
   );
 }
