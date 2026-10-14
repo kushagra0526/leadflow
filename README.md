@@ -4,6 +4,8 @@ A small CRM for tracking potential customers ("leads"), logging every conversati
 
 **Stack:** Next.js 16 (TypeScript, Tailwind CSS) · FastAPI · SQLAlchemy 2 · PostgreSQL (SQLite for local dev without Docker)
 
+**▶ [Watch the demo video](https://github.com/kushagra0526/leadflow/releases/download/v1.0/leadflow-demo.mp4)** (98 s, narrated): setup, the lead list, filters and search, logging a call with a follow-up, status changes, adding a lead, and the API's error handling.
+
 ![Lead list with overdue and today's follow-ups pinned to the top](docs/screenshots/lead-list.png)
 
 | Lead popup | Add lead | Phone |
